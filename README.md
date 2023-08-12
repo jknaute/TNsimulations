@@ -17,3 +17,5 @@ main implementation files:
 projects:
 - gl_para_corr.jl: calculation of thermal correlation functions in https://arxiv.org/abs/1912.08836
 - gl_iTEBD2_renyiquench.jl: calculation of entanglement quantities after thermal quantum quenches in https://arxiv.org/abs/2206.10528
+- gl_iTEBD2_DQPT.jl: calculation of entanglement spectra after quantum quenches and discussion of dynamical quantum phase transitions (DQPT)
+- DQPT_analysis.jl: analysis and presentation of the former data; used in https://arxiv.org/abs/2210.15682
