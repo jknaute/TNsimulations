@@ -41,14 +41,14 @@ using Base.Threads
 ## chain and evolution parameters:
 N = 2
 d = 2
-maxD=100
+maxD=200
 prec=1e-15
 maxErr=1e-5
 
-beta_th = 0.5/2
-steps_th = 50
+beta_th = 4.0012/2
+steps_th = 4000
 inc_th=1
-conv_prec = 0 # relative convergence threshold/precision for imaginary time evolution break w.r.t. to first operator (energy); set to 0 to run full beta
+conv_prec = 0.0 # relative convergence threshold/precision for imaginary time evolution break w.r.t. to first operator (energy); set to 0 to run full beta
 
 
 ## file things:
@@ -60,8 +60,8 @@ beta_plot = 2*beta_th
 
 ## thermal Ising parameters:
 J0 = -1.0
-h0 = -0.93 # -0.93 # -0.9827 # -0.87 # -0.992188 # -0.984375 # -0.96875 # -0.9375
-g0 = -0.0 # -0.07457159307550416 # -0.00151105 # -0.00554257 # -0.0203302
+h0 = -0.99125 # -0.992188 # -0.9825 # -0.984375 # -0.965 # -0.93 # -0.9827 # -0.87 # -0.96875 # -0.9375
+g0 = -0.00151105 # -0.00554257 # -0.0203302 # -0.07457159307550416
 
 
 
@@ -130,7 +130,8 @@ println("E_th_0 = ",E_th_0)
 
 
 # E_th_1 = MPS.expect_operator_average([MA,MB], [lA,lB], reshape(H_Ising(-1.0,-0.9375,-0.07457159307550416), d,d,d,d))
-E_th_1 = MPS.expect_operator_average([MA,MB], [lA,lB], reshape(H_Ising(-1.0,-0.9375,-0.0), d,d,d,d))
+# E_th_1 = MPS.expect_operator_average([MA,MB], [lA,lB], reshape(H_Ising(-1.0,-0.9375,-0.0), d,d,d,d))
+E_th_1 = MPS.expect_operator_average([MA,MB], [lA,lB], reshape(H_Ising(-1.0,-0.992188,-0.00151105), d,d,d,d))
 println("E_th_1 = ",E_th_1)
 
 # save_data(cat(2, real(beta_vals),real(ops[:,1])), string(@__DIR__,"/data/"*output_filename*".txt"), header=string(sth(N,beta_plot), "# beta \t energy\n"))

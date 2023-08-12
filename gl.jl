@@ -651,6 +651,22 @@ function trace_rho_squared_block(G, L, ind_min, ind_max)
 end
 
 
+""" calculate rate functions from mixed transfer matrix (assuming MPS) """
+function calculate_rate_functions(M1a,M1b, M2a,M2b, num_levels)
+    D1, D2 = size(M1a,1), size(M2a,1)
+    yR_func(vec) = reshape(tmat_r(M1a,M1b, M2a,M2b, reshape(vec, D1,D2)), D1*D2)
+    yR_linmap = LinearMap{Complex128}(yR_func, D1*D2)
+    domR = eigs(yR_linmap, nev=num_levels, which=:LM, ritzvec=false)[1] # dominant eigenvalues
+    r_i = -2*log.(abs.(domR))
+    return r_i
+end
+""" action of mixed MPS transfer matrix on vector """
+function tmat_r(M1a,M1b, M2a,M2b, xR)
+    @tensor yR[-1,-2] := M1b[-1,1,2]*conj(M2b[-2,1,3])*xR[2,3]
+    @tensor yR[-1,-2] := M1a[-1,3,1]*conj(M2a[-2,3,2])*yR[1,2]
+    return yR
+end
+
 """ calculates 2-Renyi entropy density s2=-log(Tr{rho^2})/N from right-dominant eigenvalue of transferoperator of rho^2 """
 function calculate_2Renyi_entropy(M)
     D = size(M[1])[1]
@@ -1154,33 +1170,50 @@ end
 
 """ double canonicalize a unit cell Ma,Mb """
 function double_canonicalize_and_normalize(Ma,Mb, la,lb, d; do_normalization=true)
-    @tensor ga[-1,-2,-3,-4] := Ma[-1,-2,-3,1]*inv(la)[1,-4]
-    @tensor gb[-1,-2,-3,-4] := Mb[-1,-2,-3,1]*inv(lb)[1,-4]
-    sa=size(ga); sb=size(gb)
-    fakeIndex = false
-    if sa[3]==1
-        fakeIndex = true
-        ga = reshape(ga, sa[1],d,sa[4]) # MPS form for fake index
-        gb = reshape(gb, sb[1],d,sb[4])
-    else
-        ga = reshape(ga, sa[1],d^2,sa[4]) # MPS form for MPO
-        gb = reshape(gb, sb[1],d^2,sb[4])
+    ## work with MPS or MPO:
+    is_mps = false; is_mpo = false
+    if length(size(Ma))==3
+        is_mps = true
+    elseif length(size(Ma))==4
+        is_mpo = true
     end
-    # println("ga: ",size(ga),", la: ",size(la))
-    # println("gb: ",size(gb),", lb: ",size(lb))
 
-    ga, la, gb, lb = iTEBD2.double_canonicalize(ga, diag(la), gb, diag(lb), do_normalization=do_normalization)
+    if is_mps
+        @tensor ga[-1,-2,-3] := Ma[-1,-2,1]*inv(la)[1,-3]
+        @tensor gb[-1,-2,-3] := Mb[-1,-2,1]*inv(lb)[1,-3]
+        ga, la, gb, lb = iTEBD2.double_canonicalize(ga, diag(la), gb, diag(lb), do_normalization=do_normalization)
+        la=diagm(la); lb=diagm(lb)
+        @tensor Ma[-1,-2,-3] := ga[-1,-2,1]*la[1,-3]
+        @tensor Mb[-1,-2,-3] := gb[-1,-2,1]*lb[1,-3]
+    elseif is_mpo
+        @tensor ga[-1,-2,-3,-4] := Ma[-1,-2,-3,1]*inv(la)[1,-4]
+        @tensor gb[-1,-2,-3,-4] := Mb[-1,-2,-3,1]*inv(lb)[1,-4]
+        sa=size(ga); sb=size(gb)
+        fakeIndex = false
+        if sa[3]==1
+            fakeIndex = true
+            ga = reshape(ga, sa[1],d,sa[4]) # MPS form for fake index
+            gb = reshape(gb, sb[1],d,sb[4])
+        else
+            ga = reshape(ga, sa[1],d^2,sa[4]) # MPS form for MPO
+            gb = reshape(gb, sb[1],d^2,sb[4])
+        end
+        # println("ga: ",size(ga),", la: ",size(la))
+        # println("gb: ",size(gb),", lb: ",size(lb))
 
-    la=diagm(la); lb=diagm(lb)
-    @tensor Ma[-1,-2,-3] := ga[-1,-2,1]*la[1,-3]
-    @tensor Mb[-1,-2,-3] := gb[-1,-2,1]*lb[1,-3]
-    sa=size(Ma); sb=size(Mb)
-    if fakeIndex
-        Ma = reshape(Ma, sa[1],d,1,sa[3]) # MPO form w/ fake index
-        Mb = reshape(Mb, sb[1],d,1,sb[3])
-    else
-        Ma = reshape(Ma, sa[1],d,d,sa[3]) # MPO form
-        Mb = reshape(Mb, sb[1],d,d,sb[3])
+        ga, la, gb, lb = iTEBD2.double_canonicalize(ga, diag(la), gb, diag(lb), do_normalization=do_normalization)
+
+        la=diagm(la); lb=diagm(lb)
+        @tensor Ma[-1,-2,-3] := ga[-1,-2,1]*la[1,-3]
+        @tensor Mb[-1,-2,-3] := gb[-1,-2,1]*lb[1,-3]
+        sa=size(Ma); sb=size(Mb)
+        if fakeIndex
+            Ma = reshape(Ma, sa[1],d,1,sa[3]) # MPO form w/ fake index
+            Mb = reshape(Mb, sb[1],d,1,sb[3])
+        else
+            Ma = reshape(Ma, sa[1],d,d,sa[3]) # MPO form
+            Mb = reshape(Mb, sb[1],d,d,sb[3])
+        end
     end
 
     return Ma,Mb, la,lb
@@ -1366,18 +1399,35 @@ function apply_gate_layers(Γ,λ, G, d, Dmax, Nlayers=100; tol=0)
 end
 
 """ iTEBD time evolution for 2-site gate AB; default=real-time  """
-function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, Dmax, operators; tol=0, increment::Int64=1, conv_thresh=0.0, constant_hamiltonian::Bool=true, counter_evo::Bool=false, calculate_2Renyi::Bool=false, do_recanonicalization::Bool=true, do_normalization::Bool=true, err_max=Inf)
+function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, Dmax, operators;
+                                 tol=0, increment::Int64=1, conv_thresh=0.0, constant_hamiltonian::Bool=true, counter_evo::Bool=false,
+                                 calculate_2Renyi::Bool=false, collect_spectrum::Bool=false, num_rate_levels::Int64=0, onesite_ops=[],
+                                 do_recanonicalization::Bool=true, do_normalization::Bool=true, err_max=Inf)
+    ## variables:
     dt = total_time/steps
     err = Array{Complex128,1}(1+Int(floor(steps/increment)))
     time = Array{Complex128,1}(1+Int(floor(steps/increment)))
     nop = length(operators)
     opvalues = Array{Complex128,2}(1+Int(floor(steps/increment)),nop)
+    n_onesite_ops = length(onesite_ops)
+    onesite_opvals = Array{Complex128,2}(1+Int(floor(steps/increment)),n_onesite_ops)
     renyi = Array{Complex128,2}(1+Int(floor(steps/increment)),2)
+    Dstart = size(la,1)
+    spectrum = Array{Complex128,2}(1+Int(floor(steps/increment)),Dstart)
+    rates = Array{Complex128,2}(1+Int(floor(steps/increment)),num_rate_levels)
+    Ma0,Mb0, la0,lb0 = deepcopy(Ma), deepcopy(Mb), deepcopy(la), deepcopy(lb)
 
+    ## initializations:
     datacount=1
     n_error=0
     err[1] = time[1] = 0.0
-    for k = 1:nop opvalues[1,k] = expect_operator_average([Ma,Mb], [la,lb], operators[k]) end
+    for k = 1:nop # 2-site ops, assumes MPO
+        opvalues[1,k] = expect_operator_average([Ma,Mb], [la,lb], operators[k])
+    end
+    for k = 1:n_onesite_ops # 1-site ops, assumes MPS
+        @tensor ga[-1,-2,-3] := Ma[-1,-2,1]*inv(la)[1,-3]; @tensor gb[-1,-2,-3] := Mb[-1,-2,1]*inv(lb)[1,-3]
+        onesite_opvals[1,k] = iTEBD2.expect_local_dcan(ga, diag(la), gb, diag(lb), onesite_ops[k])
+    end
     if calculate_2Renyi
         s1 = -dot(diag(la).^2,log.(diag(la).^2))
         s2 = -log(sum(diag(la).^4))
@@ -1386,6 +1436,15 @@ function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, 
         renyi[1,1] = s1
         renyi[1,2] = s2
         println("s1(0), s2(0) = ",s1,", ",s2)
+    end
+    if collect_spectrum
+        spectrum[1,:] = diag(la).^2
+    end
+    rate_error = false
+    if num_rate_levels>0
+        rates_result = calculate_rate_functions(Ma0,Mb0, Ma0,Mb0, num_rate_levels)
+        num_rates = length(rates_result) # the actual number of eigenvalues might be smaller for small bond dimensions
+        rates[1,1:num_rates] = rates_result
     end
 
     ## unique time evolution gate for no quench: default=real-time
@@ -1411,6 +1470,7 @@ function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, 
         end
 
         err_tmp = 0.0 # dummy
+        old_la, old_lb = la, lb
         try
             Ma,Mb, la,lb, err_tmp = gl_iTEBD2_fullstep(Ma,Mb, la,lb, W, Dmax, tol=tol, counter_evo=counter_evo)
             # Ma,Mb, la,lb = double_canonicalize_and_normalize(Ma,Mb, la,lb, d, do_normalization=do_normalization)
@@ -1419,6 +1479,7 @@ function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, 
             n_error += 1
             continue
         end
+
         ## stop loop at max error:
         if err_tmp > err_max break end
 
@@ -1434,11 +1495,21 @@ function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, 
             time[datacount] = t
             err[datacount] = err_tmp
 
+            ## norm difference in singular values:
+            Dcommon = minimum([size(old_la,1), size(la,1), size(old_lb,1), size(lb,1)]) # dynamical truncation might change size of Schmidt values during time steps
+            eps = vecnorm(diag(old_la)[1:Dcommon] - diag(la)[1:Dcommon])/vecnorm(diag(la)[1:Dcommon]) + vecnorm(diag(old_lb)[1:Dcommon] - diag(lb)[1:Dcommon])/vecnorm(diag(lb)[1:Dcommon])
+            println("eps: ",eps)
+
             ## calculate operators:
             for k = 1:nop
                 opvalues[datacount,k] = expect_operator_average([Ma,Mb], [la,lb], operators[k])
                 println("E = ",real(opvalues[datacount,1])," , E_reldiff = ",abs(opvalues[datacount,1]-opvalues[datacount-1,1])/abs(opvalues[datacount,1]))
             end
+            for k = 1:n_onesite_ops
+                @tensor ga[-1,-2,-3] := Ma[-1,-2,1]*inv(la)[1,-3]; @tensor gb[-1,-2,-3] := Mb[-1,-2,1]*inv(lb)[1,-3]
+                onesite_opvals[datacount,k] = iTEBD2.expect_local_dcan(ga, diag(la), gb, diag(lb), onesite_ops[k])
+            end
+
             ## calculate 2-Renyi entropy density:
             if calculate_2Renyi
                 s1 = -dot(diag(la).^2,log.(diag(la).^2))
@@ -1449,14 +1520,40 @@ function gl_iTEBD2_timeevolution(Ma,Mb, la,lb, hamblocks, total_time, steps, d, 
                 renyi[datacount,2] = s2
                 println("s1, s2 = ",s1,", ",s2)
             end
-            println("Tr_rho(t) = ",trace_rho_average([Ma,Mb], [la,lb]))
+
+            ## collect entanglement spectrum:
+            if collect_spectrum
+                Dtmp = size(la,1)
+                if Dtmp < Dstart
+                    spectrum[datacount,:] = cat(1, diag(la)[1:Dtmp].^2, zeros(Dstart-Dtmp))
+                else
+                    spectrum[datacount,:] = diag(la)[1:Dstart].^2
+                end
+            end
+
+            ## calculate rate functions:
+            if num_rate_levels>0
+                try
+                    rates_result = calculate_rate_functions(Ma,Mb, Ma0,Mb0, num_rate_levels)
+                    num_rates = length(rates_result)
+                    rates[datacount,1:num_rates] = rates_result
+                catch
+                    println("ERROR in rate level ",counter)
+                    rate_error = true
+                end
+            end
+
+            if length(size(Ma))==4 println("Tr_rho(t) = ",trace_rho_average([Ma,Mb], [la,lb])) end
 
             ## break at convergence precision (for ground state search in imaginary time evolution):
             if nop>=1 && abs(opvalues[datacount,1]-opvalues[datacount-1,1])/abs(opvalues[datacount,1])<=conv_thresh break end
         end
     end
+    println("rate_error: ",rate_error)
 
-    if calculate_2Renyi
+    if collect_spectrum
+        return Ma,Mb, la,lb, err, time, opvalues, onesite_opvals, renyi, spectrum, rates
+    elseif calculate_2Renyi
         return Ma,Mb, la,lb, err, time, opvalues, renyi
     else
         return Ma,Mb, la,lb, err, time, opvalues
@@ -1482,14 +1579,30 @@ function gl_iTEBD2_halfstep(M1,M2, l2, block, Dmax; tol=0, printmessage=false, c
     ###        ATTENTION: l2 is at array position l[3]
     ### output: [M_A,M_B] , [lambda_A,lambda_B=l2]
 
+    ## work with MPS or MPO:
+    is_mps = false; is_mpo = false
+    if length(size(M1))==3
+        is_mps = true
+    elseif length(size(M1))==4
+        is_mpo = true
+    end
+
     ## contract full state
     if counter_evo
         @tensor X_AB[-1,-2,-3,-4,-5,-6] := l2[-1,1]*M1[1,2,3,4]*M2[4,5,6,-6]*block[2,5,-2,-4]*conj(block[3,6,-3,-5])
     else
-        @tensor X_AB[-1,-2,-3,-4,-5,-6] := l2[-1,1]*M1[1,2,-3,3]*M2[3,4,-5,-6]*block[2,4,-2,-4]
+        if is_mps
+            @tensor X_AB[-1,-2,-3,-4] := l2[-1,1]*M1[1,2,3]*M2[3,4,-4]*block[2,4,-2,-3]
+        elseif is_mpo
+            @tensor X_AB[-1,-2,-3,-4,-5,-6] := l2[-1,1]*M1[1,2,-3,3]*M2[3,4,-5,-6]*block[2,4,-2,-4]
+        end
     end
     sXab = size(X_AB)
-    X_AB = reshape(X_AB, sXab[1]*sXab[2]*sXab[3], sXab[4]*sXab[5]*sXab[6])
+    if is_mps
+        X_AB = reshape(X_AB, sXab[1]*sXab[2], sXab[3]*sXab[4])
+    elseif is_mpo
+        X_AB = reshape(X_AB, sXab[1]*sXab[2]*sXab[3], sXab[4]*sXab[5]*sXab[6])
+    end
 
     ## svd (mid side)
     F = try
@@ -1503,10 +1616,16 @@ function gl_iTEBD2_halfstep(M1,M2, l2, block, Dmax; tol=0, printmessage=false, c
 
     ## new tensors:
     lambda_A = diagm(S)
-    X = reshape(U, sXab[1],sXab[2],sXab[3],D)
-    Y = reshape(V, D,sXab[4],sXab[5],sXab[6])
+    if is_mps
+        X = reshape(U, sXab[1],sXab[2],D)
+        Y = reshape(V, D,sXab[3],sXab[4])
+        @tensor M_A[-1,-2,-3] := inv(l2)[-1,1]*X[1,-2,2]*lambda_A[2,-3]
+    elseif is_mpo
+        X = reshape(U, sXab[1],sXab[2],sXab[3],D)
+        Y = reshape(V, D,sXab[4],sXab[5],sXab[6])
+        @tensor M_A[-1,-2,-3,-4] := inv(l2)[-1,1]*X[1,-2,-3,2]*lambda_A[2,-4]
+    end
 
-    @tensor M_A[-1,-2,-3,-4] := inv(l2)[-1,1]*X[1,-2,-3,2]*lambda_A[2,-4]
     M_B = Y
     if printmessage println("D = ",D) end
 

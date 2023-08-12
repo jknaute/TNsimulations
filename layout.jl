@@ -33,6 +33,42 @@ function nice_ticks()
     ax[:set_position](mpltrafo.Bbox([[0.16, 0.12], [0.95, 0.94]]))
 end
 
+function nice_ticks_doubleaxis(ax1,ax2)
+    ax1[:get_xaxis]()[:set_tick_params](direction="in", bottom=1, top=1)
+    ax1[:get_yaxis]()[:set_tick_params](direction="in", left=1, right=0)
+    ax2[:get_yaxis]()[:set_tick_params](direction="in", left=0, right=1)
+
+    for l in ax1[:get_xticklines]()
+        l[:set_markersize](8)
+        l[:set_markeredgewidth](2.0)
+    end
+    for l in ax1[:xaxis][:get_minorticklines]()
+        l[:set_markersize](4)
+        l[:set_markeredgewidth](1.5)
+    end
+
+    for l in ax1[:get_yticklines]()
+        l[:set_markersize](8)
+        l[:set_markeredgewidth](2.0)
+    end
+    for l in ax1[:yaxis][:get_minorticklines]()
+        l[:set_markersize](4)
+        l[:set_markeredgewidth](1.5)
+    end
+
+    for l in ax2[:get_yticklines]()
+        l[:set_markersize](8)
+        l[:set_markeredgewidth](2.0)
+    end
+    for l in ax2[:yaxis][:get_minorticklines]()
+        l[:set_markersize](4)
+        l[:set_markeredgewidth](1.5)
+    end
+
+    ax1[:set_position](mpltrafo.Bbox([[0.14, 0.12], [0.89, 0.94]]))
+    ax2[:set_position](mpltrafo.Bbox([[0.14, 0.12], [0.89, 0.94]]))
+end
+
 linew = 2
 rc("font", size = 18) #fontsize of axis labels (numbers)
 rc("axes", labelsize = 20, lw = linew) #fontsize of axis labels (symbols)

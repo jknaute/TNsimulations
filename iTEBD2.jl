@@ -618,11 +618,11 @@ end
 # (or the expectation of any other two-site operator.)
 # dcan stands for "double canonical", meaning the canonical
 # form with two-site translation symmetry.
-
 function expect_twositelocal_dcan_AB(ΓA, λA, ΓB, λB, O)
-    D = size(ΓA, 1)
-    A = reshape(λB, (D,1,1)) .* ΓA .* reshape(λA, (1,1,D))
-    B = ΓB .* reshape(λB, (1,1,D))
+    D_B = size(ΓA, 1) # there might be unequal bond dims from dynamical truncation
+    D_A = size(ΓA, 3)
+    A = reshape(λB, (D_B,1,1)) .* ΓA .* reshape(λA, (1,1,D_A))
+    B = ΓB .* reshape(λB, (1,1,D_B))
     @tensor AB[x,i,j,y] := A[x,i,a] * B[a,j,y]
     @tensor expectAB[] := AB[a,i,j,b] * O[i,j,m,n] * conj(AB)[a,m,n,b]
     return expectAB[1]
@@ -634,6 +634,19 @@ function expect_twositelocal_dcan(ΓA, λA, ΓB, λB, O)
     expectation = (expectAB + expectBA) / 2.
     return expectation
 end
+
+
+## expectation value of one-site operator (e.g. magnetization sigma_z)
+## within a two-site translational invariant unit cell AB
+function expect_local_dcan(ΓA, λA, ΓB, λB, O)
+    λA_sqr = diagm(λA.^2)
+    λB_sqr = diagm(λB.^2)
+    expectation_A = expect_local(ΓA, O, λB_sqr, λA_sqr)
+    expectation_B = expect_local(ΓB, O, λA_sqr, λB_sqr)
+    expectation = (expectation_A + expectation_B)/2.
+    return expectation
+end
+
 
 
 # magfield = 1.0

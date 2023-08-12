@@ -41,34 +41,34 @@ using Base.Threads
 ## chain and evolution parameters:
 N = 2
 d = 2
-maxD=500
+maxD=488
 prec=1e-15
 maxErr=1e-6
 
-beta_th = 0.5/2
-steps_th = 500
+beta_th = 4.0012/2
+steps_th = 4000
 inc_th=1
 conv_prec = 0 # relative convergence threshold/precision for imaginary time evolution break w.r.t. to first operator (energy); set to 0 to run full beta
 
-total_time_quench = 10.0
-steps = 10000
+total_time_quench = 20.0
+steps = 20000
 inc_t = 50
 
 ## file things:
-dict_filename = "linearresponse/continuum_limit_renyiquench/freefermions/thermalstate_free1_beta05_iTEBD2"
-output_filename = "linearresponse/continuum_limit_renyiquench/freefermions/entropiesfreequenchtype1beta05iTEBD2D500"
+dict_filename = "linearresponse/continuum_limit_renyiquench/small/thermalstate_type1_beta4_cont4"
+output_filename = "linearresponse/continuum_limit_renyiquench/small/entropiestype1beta4cont4D500"
 beta_plot = 2*beta_th
 
 
 ## thermal Ising parameters:
 J0 = -1.0
-h0 = -0.93 # -0.9375 # -0.93
-g0 = -0.0 # -100.0 # -0.07457159307550416
+h0 = -0.99125 # -0.9825 # -0.965 # -0.93 # -0.9375
+g0 = -0.00151105 # -0.00554257 # -0.0203302 # -0.07457159307550416
 
 ## real-time Ising parameters:
 J1 = -1.0
-h1 = -0.9375 # -0.9827 # -0.88
-g1 = -0.0 # -0.07457159307550416
+h1 = -0.992188 # -0.984375 # -0.96875 # -0.9827 # -0.88
+g1 = -0.00151105 # -0.00554257 # -0.0203302 # -0.07457159307550416
 
 
 function sth(N,beta,time,steps,D)

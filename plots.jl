@@ -1356,7 +1356,7 @@ xlabel("\$t J\$")
 ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
 xlim(0,50)
 ylim(0,ytop)
-text(3,3.9, "\$\\beta^*J = 2.00,\\, \\beta^* M_1 = 3.1\$")
+text(3,3.9, "\$\\beta^*J = 2.00,\\, \\beta^* M_1 = 3.0\$")
 legend(loc = "best", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
 layout.nice_ticks()
 savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/figures/betaJ2/s12_betaJ2_type1.pdf"))
@@ -1420,6 +1420,35 @@ savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/figure
 clf()
 
 
+##---------------------- type 1 & 2 from βJ=16:
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta16iTEBD2.txt", "(1)", "C0")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/nonintferro/entropiesE8tononint1beta16iTEBD2.txt", "(2)", "C1")
+
+figure(1)
+xlabel("\$t J\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,50)
+ylim(-0.01,0.08)
+# text(1,5.5, "\$\\beta^*J = 0.50,\\, \\beta^* M_1 = 0.8\$")
+legend(loc = "upper left", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_betaJ16_type12.pdf"))
+
+
+##---------------------- type 3 & 4 from βJ=16:
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/nonintferro/entropiescrittononint1beta16iTEBD2D300.txt", "(3)", "C2")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/classical/entropiesclassicaltononint1beta16iTEBD2D300.txt", "(4)", "C3")
+
+figure(1)
+xlabel("\$t J\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,50)
+# ylim(-0.01,0.08)
+# text(1,5.5, "\$\\beta^*J = 0.50,\\, \\beta^* M_1 = 0.8\$")
+legend(loc = "upper left", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/nonintferro/plots/s12_betaJ16_type34.pdf"))
+
 
 ##---------------------- high temp  βJ=0.5 profile 1:
 plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta05iTEBD2D400.txt", "\$\\chi=400\$", "C0")
@@ -1436,8 +1465,10 @@ xlabel("\$t J\$")
 ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
 xlim(0,10)
 ylim(0,6)
+axvline(7.5, ls="--", c="grey",zorder=-1)
 text(1,5.5, "\$\\beta^*J = 0.50,\\, \\beta^* M_1 = 0.8\$")
-legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+# legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+legend(loc = "lower right", numpoints=3, frameon=1, fancybox=1, columnspacing=1, facecolor="white")
 layout.nice_ticks()
 savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_betaJ05_type1.pdf"))
 
@@ -1451,6 +1482,33 @@ savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/
 
 
 
+##---------------------- comparison high temp  βJ=0.5 profile 1 with free fermion equivalent:
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta05iTEBD2D500.txt", "(1)", "C0")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/freefermions/entropiesfreequenchtype1beta05iTEBD2D500.txt", "free fermions", "C1")
+
+figure(1)
+x = linspace(0,10,100)
+y1 = 0.037469 + 0.665854*x  # s1 fit (1)
+y2 = 0.183528 + 0.527892*x  # s2 fit (1)
+y3 = 0.0108503 + 0.68425*x  # s1 fit (ff1)
+y4 = 0.0835516 + 0.58525*x  # s2 fit (ff1)
+plot(x, y1, ls="--", c="k",lw=1)
+plot(x, y2, ls="-", c="k",lw=1)
+plot(x, y3, ls="--", c="grey",lw=1)
+plot(x, y4, ls="-", c="grey",lw=1)
+xlabel("\$t J\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,10)
+ylim(0,6)
+axvline(7.5, ls="--", c="grey",zorder=-1)
+# text(1,5.5, "\$\\beta^*J = 0.50,\\, \\beta^* M_1 = 0.8,\\, \\beta^* M_h = 0.06\$")
+# legend(loc = "lower right", numpoints=3, frameon=1, fancybox=1, columnspacing=1, facecolor="white")
+legend(loc = "upper left", numpoints=3, frameon=0, fancybox=0, columnspacing=1, title="\$\\beta^* M_1 = 0.8,\\, \\beta^* M_h = 0.06\$")
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_betaJ05_type1_vs_ff1.pdf"))
+
+
+
 ##---------------------- high temp  βeff J=0.91 profile 4:
 plot_entropies("/data/linearresponse/continuum_limit_renyiquench/classical/entropiesclassicaltononint1beta16iTEBD2D300.txt", "\$\\chi=300\$", "C0")
 plot_entropies("/data/linearresponse/continuum_limit_renyiquench/classical/entropiesclassicaltononint1beta16iTEBD2D500.txt", "\$\\chi=500\$", "C1")
@@ -1461,6 +1519,7 @@ xlabel("\$t J\$")
 ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
 xlim(0,15)
 ylim(0,5)
+axvline(9.0, ls="--", c="grey",zorder=-1)
 text(1,4.5, "\$\\beta^*J = 0.91,\\, \\beta^* M_1 = 1.4\$")
 legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
 layout.nice_ticks()
@@ -1484,7 +1543,7 @@ savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/classi
 
 plot_entropies("/data/linearresponse/continuum_limit_renyiquench/nonintferro/entropiescrittononint1beta097iTEBD2D500.txt", "(3)", "C0")
 plot_entropies("/data/linearresponse/continuum_limit_renyiquench/classical/entropiesclassicaltononint1beta16iTEBD2D500.txt", "(4)", "C1")
-plot_entropies("/data/linearresponse/continuum_limit_renyiquench/nonintferro/entropiestype7beta16iTEBD2D500.txt", "(7)", "C2")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/nonintferro/entropiestype7beta16iTEBD2D500.txt", "(6)", "C2")
 
 figure(1)
 x = linspace(0,15,100)
@@ -1492,18 +1551,153 @@ y1 = 0.0880231 + 0.422513*x  # s1 fit
 plot(x, y1, ls="--", c="k",lw=1)
 xlabel("\$t J\$")
 ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
-xlim(0,15)
-ylim(0,5)
-text(1,4.5, "\$\\beta^*J = 0.91,\\, \\beta^* M_1 = 1.4\$")
-legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+xlim(0,10)
+ylim(0,6)
+axvline(9.0, ls="--", c="grey",zorder=-1)
+# text(1,5.5, "\$\\beta^* M_1 \\approx 1.4\$")
+legend(loc = "upper left", numpoints=3, frameon=0, fancybox=0, columnspacing=1, title="\$\\beta^* M_1 \\approx 1.4\$")
 layout.nice_ticks()
 savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/figures/s12_betaeff09_typecomp.pdf"))
 
 
 
 
+##---------------------- high temp  βJ=0.5 profile 1 for different cont limits:
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta05iTEBD2D500.txt", "\$n = 0\$", "C0")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont2D500.txt", "\$n = 1\$", "C1")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont3D500.txt", "\$n = 2\$", "C2")
+plot_entropies("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont4D500.txt", "\$n = 3\$", "C3")
+
+figure(1)
+# x = linspace(0,10,100)
+# y1 = 0.037469 + 0.665854*x  # s1 fit
+# y2 = 0.183528 + 0.527892*x  # s2 fit
+# plot(x, y1, ls="--", c="k",lw=1)
+# plot(x, y2, ls="-", c="k",lw=1)
+xlabel("\$t J\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,10)
+ylim(0,6)
+# text(1,5.5, "\$\\beta^*J = 0.50,\\, \\beta^* M_1 = 0.8\$")
+legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_betaJ05_type1_contlimits.pdf"))
+
+figure(2)
+xlabel("\$t J\$")
+ylabel("truncation error")
+xlim(0,10)
+# ylim(top=1e-7)
+layout.nice_ticks()
+# savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/err_betaJ05_type1_contlimits.pdf"))
 
 
+
+
+### ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+### different cont limits at βJ=0.5
+
+function plot_entropies_contlimit(file, plotlabel, col, M1, indmax, ls_s1="--")
+    f = open(string(@__DIR__,file))
+    lines = readlines(f)
+    close(f)
+    sep_inds = findin(lines, [""])
+
+    for i = 1:length(sep_inds)
+        counter = 1
+
+        if i==1
+            steps = sep_inds[i]-3
+            t = Array{Float64}(steps)
+            err = Array{Float64}(steps)
+            s1 = Array{Float64}(steps)
+            s2 = Array{Float64}(steps)
+            for l = 3 : sep_inds[1]-1
+                line = parse.(split(lines[l]))
+                t[counter] = line[1]
+                err[counter] = line[2]
+                s1[counter] = line[3]
+                s2[counter] = line[4]
+                counter += 1
+            end
+        end
+
+        figure(1)
+        plot(t[1:indmax]*M1, s1[1:indmax]-s1[1], ls=ls_s1, c=col)
+        plot(t[1:indmax]*M1, s2[1:indmax]-s2[1], ls="-", label=plotlabel, c=col)
+
+        figure(2)
+        plot(t, err, label=plotlabel, c=col)
+    end
+end
+
+
+### ---------------------------  cont limits type 1:
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta05iTEBD2D500.txt", "\$n = 0\$", "C0", 1.5280723187141292, 200)
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont2D500.txt", "\$n = 1\$", "C1", 0.7640361593570648, 150)
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont3D500.txt", "\$n = 2\$", "C2", 0.3820180796785324, 150)
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta05cont4D500.txt", "\$n = 3\$", "C3", 0.19100903983926618, 150)
+
+figure(1)
+xlabel("\$t M_1\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,8)
+ylim(0,5)
+legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_betaJ05_type1_contlimits.pdf"))
+
+
+### ---------------------------  different slopes:
+figure(2)
+βeffM = 0.5*[1.5280723187141292, 0.7640361593570648, 0.3820180796785324,0.19100903983926618]
+slopesS1 = [0.442649, 0.910587, 1.83865, 3.68663]
+slopesS2 = [0.353898, 0.789369, 1.61486, 3.24505]
+x = linspace(0,1,100)
+s1fit = 2.93485*x
+s2fit = 3.59939*x
+plot(βeffM, 1 ./ slopesS1, ls="", marker="s", label="\$\\tilde s_1\$")
+plot(βeffM, 1 ./ slopesS2, ls="", marker="o", label="\$\\tilde s_2\$")
+plot(x, s1fit, ls="-", c="blue", zorder=-1)
+plot(x, s2fit, ls="--", c="orange", zorder=-1)
+legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+xlim(0,1)
+ylim(0,3)
+xlabel("\$\\beta^* M_1\$")
+ylabel("\$1 / r\$")
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/contlimits_slopedependence.pdf"))
+
+
+### ---------------------------  contlimit at fixed β^* M^post:
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiessmallquenchtononint1beta05iTEBD2D500.txt", "\$n = 0\$", "C0", 1.5280723187141292, 200)
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta1cont2D500.txt", "\$n = 1\$", "C1", 0.7640361593570648, 150)
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta2cont3D500.txt", "\$n = 2\$", "C2", 0.3820180796785324, 200, "-.")
+plot_entropies_contlimit("/data/linearresponse/continuum_limit_renyiquench/small/entropiestype1beta4cont4D500.txt", "\$n = 3\$", "C3", 0.19100903983926618, 400)
+
+figure(1)
+xlabel("\$t M_1\$")
+ylabel("\$\\tilde{s}_{1,2}(t) - \\tilde{s}_{1,2}(0)\$")
+xlim(0,3.8)
+ylim(0,2.5)
+legend(loc = "lower right", numpoints=3, frameon=0, fancybox=0, columnspacing=1)
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/small/plots/s12_type1_contlimits2.pdf"))
+
+
+### ---------------------------  dependence of slope of s_1 growth on effective temperature
+
+βeff  = [6.1,          3.55,        1.55,     0.91, 2.0,       1.92,      1.34,     0.5]
+slope = [0.0000305656, 0.00124843, 0.0471359, 0.42, 0.0467689, 0.0516883, 0.193384, 0.67]
+M1    = 1.5
+
+figure(1)
+axvline(1.0, ls="--", c="grey",zorder=-1)
+plot(βeff*M1, slope, ls="", marker="s")
+xlabel("\$\\beta^* M_1\$")
+ylabel("linear slope")
+layout.nice_ticks()
+savefig(string(@__DIR__,"/data/linearresponse/continuum_limit_renyiquench/figures/slope_temp_dependence.pdf"))
 
 
 
